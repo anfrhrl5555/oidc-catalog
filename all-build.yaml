@@ -1,0 +1,37 @@
+apiVersion: cicd.accordions.co.kr/v1beta1
+kind: PipelineTemplate
+metadata:
+  annotations:
+    accordions.co.kr/summary: vcs -> check dockerfile-> dockerfile build -> deploy
+  labels:
+    app.kubernetes.io/created-by: cicd-template-sync-manager
+    app.kubernetes.io/managed-by: ClusterPipelineTemplate
+    app.kubernetes.io/name: all-build
+  name: all-build 
+spec:
+  tasks:
+  - name: vcs-get
+    templateRef:
+      name: acc-vcs-git
+
+  - depends: vcs-get.Succeeded
+    name: check-dockerfile
+    templateRef:
+      name: acc-shell-checkfile
+    values:
+      filename: Dockerfile
+
+  - depends: check-dockerfile.Succeeded || self-dockerfile.Succeeded
+    name: image-build
+    templateRef:
+      name: acc-image-kaniko
+    values:
+      additionalCreds:
+      - infra-registry
+
+  - depends: check-dockerfile.Failed
+    name: self-dockerfile
+    templateRef:
+      name: all-dockerfile
+
+

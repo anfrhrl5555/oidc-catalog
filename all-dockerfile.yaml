@@ -1,0 +1,44 @@
+apiVersion: cicd.accordions.co.kr/v1beta1
+kind: TaskTemplate
+metadata:
+  annotations:
+    accordions.co.kr/summary: 'Dockerfile: all'
+    cicd.accordions.co.kr/category: image
+  labels:
+    app.kubernetes.io/created-by: cicd-template-sync-manager
+    app.kubernetes.io/managed-by: ClusterTaskTemplate
+    app.kubernetes.io/name: all-dockerfile
+  name: all-dockerfile
+spec:
+  container:
+    args:
+    - |
+      export workspace="." && \
+      export contextpath="{{.values.contextpath}}" && \
+      if [ -f $workspace/Dockerfile ] ; then \
+        echo '[INFO] exist Dockerfile'; \
+        cat $workspace/Dockerfile ; \
+        return 0; \
+      fi && \
+      echo -e {{.values.dockerfileContents | quote}} > $workspace/Dockerfile && \
+      echo '[INFO] write Dockerfile'; \
+      cat $workspace/Dockerfile
+    command:
+    - sh
+    - -c
+    image: busybox
+    imagePullPolicy: Always
+    name: ""
+    resources: {}
+  valueschema:
+    properties:
+      contextpath:
+        default: ROOT
+        description: 서비스할 컨텍스트 경로
+        type: string
+      dockerfileContents:
+        description: 작업 서버에 있는 dockerfile 내용 입력
+        default: |-
+        format: textarea
+        type: string
+    type: object
